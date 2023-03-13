@@ -1,9 +1,7 @@
-from telegram import Update, Bot
-from telegram.ext import CommandHandler, CallbackContext
 from aiogram import Bot, Dispatcher, executor, types
 from aiogram.types import ChatMemberUpdated
 from config import TOKEN_API, VIDEO_RATE
-from ikb import ikb, ikb2, ikb3, ikb4, ikb5, ikb6, ikb7, ikb8, ikb9
+from ikb import ikb, ikb2, ikb3, ikb4, ikb5, ikb6, ikb7, ikb8, ikb9, ikb10
 from datetime import datetime
 import time
 import sqlite3
@@ -96,6 +94,20 @@ async def callback_profile(callback: types.CallbackQuery):
             user_data['balance'] += VIDEO_RATE
             user_data['success'] += 1
             current_video = user_data['current_video']
+            await callback.message.answer(text=(
+                f'✅ Просмотр засчитан\n'
+                f'Баланс: {user_data["balance"] - VIDEO_RATE} лей → {user_data["balance"]} лей'
+                ))
+            if 'watched_before' not in user_data:
+                user_data['watched_before'] = True
+                user_data['balance'] += 200
+                await callback.message.answer(text=(
+                    f'🎁 Бонус: Новый пользователь!\n'
+                    f'\n'
+                    f'Баланс: {user_data["balance"] - 200} лей → {user_data["balance"]} лей \n'
+                    f'\n'
+                    f'Заходите каждый день, чтобы получить больше бонусов от нашей платформы!'
+                ))
             if current_video < len(videos)-1:
                 user_data['current_video'] += 1
                 user_data['current_duration'] = video_durations[current_video+1]
@@ -107,23 +119,28 @@ async def callback_profile(callback: types.CallbackQuery):
                 await callback.message.answer_video(video=open(videos[current_video+1], 'rb'), reply_markup=ikb6)
                 user_data['last_watch_time'] = time.time()
             else:
-                await callback.message.answer(text='Вы посмотрели все видео!', reply_markup=ikb)
+                await callback.message.answer(text='you watched all the videos!', reply_markup=ikb)
             await callback.message.delete()
         else:
             remaining_time = round(user_data['current_duration'] - elapsed_time)
-            await callback.answer(f'Подождите еще {remaining_time} секунд')
+            await callback.answer(f'Wait another {remaining_time} seconds')
+        
 
     if callback.data == 'stop_watching':    
+        await callback.message.delete()
         await callback.message.answer(text='Вы уверены, что хотите закончить заработок с просмотра оплачиваемых видеороликов?',
                                       reply_markup=ikb7)
-    if callback.data == 'yes_stop':    
+        
+    if callback.data == 'yes_stop':   
+        await callback.message.delete() 
         await callback.message.answer(text=(   
                                     f'🎉 Вы заработали {user_data["balance"]} лей. Приходите снова, что бы заработать больше денег \n'
                                     f'\n'
                                     f'❗️Для вас доступен бонус новичка! 200L для новых пользователей ТикТок бота. Для того, чтобы забрать 200L , нажмите кнопку ниже \n'
                                     f'↓'
                                     ), reply_markup=ikb8)
-    if callback.data == 'no_stop':    
+    if callback.data == 'no_stop':  
+        await callback.message.delete()  
         await callback.message.answer(text=(
             f'❗️Не пытайтесь нажимать кнопку "Просмотрено" несколько раз подряд.Вы сможете ее нажать только после того, как будет учтен Ваш просмотр \n'
             f'\n'
@@ -148,6 +165,36 @@ async def callback_profile(callback: types.CallbackQuery):
             f'\n'
             f'❗️ Внимание: если вы отпишитесь от канала спонсора, вы будете заблокированы в нашей системе TikTok Pay на всех устройствах! \n'
         ),reply_markup=ikb9)
+        
+    
+    # if callback.data == 'bonus_no':
+
+
+    if callback.data == 'check_chanel':
+        try:
+            member = await bot.get_chat_member(chat_id='@aza10chanel', user_id=user_id)
+            if member.status == 'member' or member.status == 'creator' or member.status == 'administrator':
+                get_bonus = 200
+                await callback.message.answer(text=(
+                    f'✅ Вам был начислен бонус 200L \n'
+                    f'• Баланс: {user_data["balance"]} лей → {user_data["balance"] + get_bonus} лей \n'
+                    f'\n'
+                    f'💰10 000L+ на канале, на который вы только что подписались, можно забрать сейчас \n'
+                    f'• Время изучения информации ~ 3 минуты\n'
+                    f'\n'
+                    f'@aza10chanel'
+                ),reply_markup=ikb10)
+                user_data["balance"] = user_data["balance"] + get_bonus
+            else:
+                await bot.answer_callback_query(callback.id, text='Ты не подписан на канал')
+        except Exception as e:
+            print(e)
+            await bot.answer_callback_query(callback.id, text='Попробуйте чуть позже, пожалуйста!')
+
+    if callback.data == 'no_instructions':
+        await callback.message.delete()
+        await callback.message.answer(text='Выберите пункт меню ⤵️',
+                         reply_markup=ikb)
 
     # Обработка коллбэка - "профиль"
     if callback.data == 'profile':
@@ -185,9 +232,18 @@ async def callback_profile(callback: types.CallbackQuery):
         ), reply_markup=ikb3)
 
     # Обработка коллбэка - "способов оплаты"
-    if callback.data == 'btn_cash_payment':
-        await callback.message.delete()
-        await callback.message.answer(text='Введите ваши реквезиты:', reply_markup=ikb4)
+    # if callback.data == 'btn_cash_payment':
+    #     await callback.message.delete()
+    #     await callback.message.answer(text='Введите ваши реквезиты:', reply_markup=ikb4)
+    #     @dp.message_handler()
+    #     async def message_payment(message: types.Message):
+    #         if message.answer:
+    #             await message.answer(text='Введите сумму списания',
+    #                                  reply_markup=ikb4)
+            
+            
+            
+
 
     # Обработка коллбэка - "партнеры"
     if callback.data == 'partners':
@@ -200,6 +256,7 @@ async def callback_profile(callback: types.CallbackQuery):
             f'✔️ 100 лей за каждого приглашенного Вами пользователя.\n'
             f'➕ Приглашено человек: 0\n'
         ), reply_markup=ikb5)
+        
 
 
 # ======================================ЗАПУСК БОТА===============================================

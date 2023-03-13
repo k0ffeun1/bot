@@ -14,7 +14,11 @@ button_data = {
     "watching": "watching",
     "stop_watching": "stop_watching",
     "yes_stop": "yes_stop",
-    "no_stop": "no_stop"
+    "no_stop": "no_stop",
+    "bonus": "bonus",
+    "bonus_no": "bonus_no",
+    "chanel": "chanel",
+    "check_chanel": "check_chanel"
 }
 
 button_texts = {
@@ -31,8 +35,13 @@ button_texts = {
     "watching": "✅ Просмотрено (+5 лей)",
     "stop_watching": "✋ Закончить",
     "yes_stop": "✅ Да, закончить",
-    "no_stop": "👀 Да, закончить"
+    "no_stop": "👀 Нет, продолжить",
+    "bonus": "🎁 Забрать бонус 200 лей",
+    "bonus_no": "❌ Отказаться от бонуса",
+    "chanel": "📲 Перейти на канал",
+    "check_chanel": "☑️ Проверить подписку"
 }
+
 
 def create_inline_keyboard(buttons, row_width=1):
     markup = InlineKeyboardMarkup(row_width=row_width)
@@ -41,6 +50,7 @@ def create_inline_keyboard(buttons, row_width=1):
         callback_data = button_data.get(button, "")
         markup.add(InlineKeyboardButton(text, callback_data=callback_data))
     return markup
+
 
 ikb = create_inline_keyboard(["start", "profile", "cash", "partners"])
 ikb2 = create_inline_keyboard(["start", "back"])
@@ -58,3 +68,8 @@ ikb4 = create_inline_keyboard(["back"])
 ikb5 = create_inline_keyboard(["friends", "start", "back"])
 ikb6 = create_inline_keyboard(["watching", "stop_watching"])
 ikb7 = create_inline_keyboard(["yes_stop", "no_stop"])
+ikb8 = create_inline_keyboard(["bonus", "bonus_no"])
+ikb9 = InlineKeyboardMarkup(row_width=1)
+ibtn_channel = InlineKeyboardButton('📲 Перейти на канал', url='https://t.me/aza10chanel')
+ibtn_check_chanel = InlineKeyboardButton('☑️ Проверить подписку', callback_data='check_chanel')
+ikb9.add(ibtn_channel, ibtn_check_chanel)

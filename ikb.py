@@ -92,6 +92,10 @@ ibtn_instructions = InlineKeyboardButton('💰 Инструкция зарабо
 ibtn_no_instructions = InlineKeyboardButton('❌ Отказываюсь от знаний', callback_data='no_instructions')
 ikb10.add(ibtn_instructions,ibtn_no_instructions)
 
+ikb11 = InlineKeyboardMarkup()
+ikb11_accept = InlineKeyboardButton('Принять', callback_data='accept')
+ikb11.add(ikb11_accept)
+
 
 
 

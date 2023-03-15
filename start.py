@@ -34,7 +34,6 @@ async def on_startup(_):
 
 @dp.message_handler(commands=['start'])
 async def start_command(message: types.Message):
-    await message.delete()
     await message.answer(text='Выберите пункт меню ⤵️',
                          reply_markup=ikb)
 
@@ -158,7 +157,6 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
             f'↓'
         ), reply_markup=ikb8)
     if callback.data == 'no_stop':
-        await callback.message.delete()
         await callback.message.answer(text=(
             f'❗️Не пытайтесь нажимать кнопку "Просмотрено" несколько раз подряд.Вы сможете ее нажать только после того, как будет учтен Ваш просмотр \n'
             f'\n'
@@ -172,8 +170,9 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
         user_data['current_duration'] = video_durations[video_index]
         await callback.message.answer_video(video=open(videos[video_index], 'rb'), reply_markup=ikb6)
         user_data['last_watch_time'] = time.time()
-
+        
     if callback.data == 'bonus':
+        await callback.message.delete()
         await callback.message.answer(text=(
             f'👉 Подпишитесь на канал спонсора, и посмотрите последние посты, после чего нажмите кнопку "💰 Получить бонус". Вам будет начислено 500 лей!\n'
             f'\n'
@@ -233,7 +232,6 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
 
     # Обработка коллбэка - "назад"
     if callback.data == 'btn_back':
-        await callback.message.delete()
         await callback.message.answer(text='Выберите пункт меню ⤵️',
                                       reply_markup=ikb)
 
@@ -247,49 +245,6 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
                                                 f'Вы можете вывести средства, либо заработать дополнительно денег перед выводом\n'
         ), reply_markup=ikb3)
 
-    
-    # Обработка коллбэка - "вывод"
-
-    # if callback.data == 'btn_cash_payment':
-    #     if user_data['payment_requested']:
-    #         await callback.message.answer('Вы уже вводили реквезиты, ожидайте оплаты')
-    #         return
-    #     await callback.message.answer('Введите ваши реквезиты')
-    #     user_data['payment_requested'] = True # обновление состояния
-    #     await state.finish() # закрыть предыдущее состояние
-    #     await MyStates.request.set()
-
-    # @dp.message_handler(state=MyStates.request)
-    # async def request_answer(message: types.Message, state: FSMContext):
-    #     answer = message.text
-    #     user_id = message.from_user.id
-    #     await state.update_data(answer1=answer)
-    #     await message.answer('Введите сумму:')
-        
-    #     await MyStates.next()
-
-    # @dp.message_handler(state=MyStates.summa)
-    # async def summa_answer(message: types.Message, state: FSMContext):
-    #     data = await state.get_data()
-    #     answer1 = (await state.get_data())['answer1']
-    #     answer2 = message.text
-    #     if not answer2.isdigit():
-    #         await message.answer('Введите сумму только в цифрах')
-    #         return
-    #     if int(answer2) > user_data['balance']:
-    #         await message.answer('Ваш баланс меньше указанной суммы, повторите еще раз пожалуйста')
-    #         return
-    #     await message.answer('Ожидайте оплаты в течение трех дней')
-    #     user_data['balance'] = user_data['balance'] - int(answer2)
-
-    #     # Добавление записи в базу данных
-    #     session = Session()
-    #     payment = Payment(fullname=callback.message.chat.full_name, answer1=answer1, answer2=int(answer2))
-    #     session.add(payment)
-    #     session.commit()
-
-    #     await state.finish()
-
     if callback.data == 'btn_cash_payment':
         user_id = callback.from_user.id
         if 'request' not in users_data[user_id]:
@@ -300,6 +255,7 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
 
     @dp.message_handler(state=MyStates.request)
     async def process_request(message: types.Message, state: FSMContext):
+        await message.delete()
         user_id = message.from_user.id
         users_data[user_id]['request'] = message.text
         await message.answer('Введите сумму для снятия')
@@ -307,29 +263,31 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
 
     @dp.message_handler(state=MyStates.summa)
     async def process_summa(message: types.Message, state: FSMContext):
+        await message.delete()
         user_id = message.from_user.id
+        fullname = message.from_user.full_name
         user_data = users_data[user_id]
-        if 'request' not in user_data:
-            await message.answer('Введите реквизиты для выплаты')
-            await MyStates.request.set()
-            return
         if 'summa' in user_data:
             await message.answer('Вы уже ввели сумму для снятия, ожидайте оплату в течение 3 дней', 
                                  reply_markup=ikb4)
             return
 
         summa = message.text
-
+        
         if not summa.isdigit():
             await message.answer('Введите сумму только в цифрах')
+            await message.delete()
             return
         summa = int(message.text)
         if summa < 100:
             await message.answer('Минимальная сумма снятия - 100 лей', reply_markup=ikb4)
+            del user_data['request']
             await state.finish()
             return
         if summa > user_data['balance']:
             await message.answer('У вас недостаточно средств для снятия этой суммы', reply_markup=ikb4)
+            del user_data['request']
+            await state.finish()
             return
         user_data['summa'] = summa
         user_data['payment_requested'] = True
@@ -355,7 +313,8 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
         # закрываем соединение с базой данных
         conn.close()
         
-        await message.answer(f'Ваш запрос на выплату принят. Ожидайте выплаты. Ваш текущий баланс: {user_data["balance"]} лей')
+        await message.answer(f'Ваш запрос на выплату принят. Ожидайте выплаты. Ваш текущий баланс: {user_data["balance"]} лей',
+                             reply_markup=ikb4)
         
         await state.finish()
     

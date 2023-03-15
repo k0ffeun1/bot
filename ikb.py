@@ -20,7 +20,8 @@ button_data = {
     "chanel": "chanel",
     "check_chanel": "check_chanel",
     "instructions": "instructions",
-    "no_instructions": "no_instructions"
+    "no_instructions": "no_instructions",
+    "sum_payment": "sum_payment"
 }
 
 button_texts = {
@@ -43,7 +44,8 @@ button_texts = {
     "chanel": "📲 Перейти на канал",
     "check_chanel": "☑️ Проверить подписку",
     "instructions": "💰 Инструкция заработка",
-    "no_instructions": "❌ Отказываюсь от знаний"
+    "no_instructions": "❌ Отказываюсь от знаний",
+    "sum_payment": "Укажите сумму списания"
 }
 
 
@@ -69,20 +71,27 @@ ikb3.row(
 )
 ikb3.add(InlineKeyboardButton("back", callback_data="btn_back"))
 ikb4 = create_inline_keyboard(["back"])
-ikb6 = create_inline_keyboard(["watching", "stop_watching"])
-ikb7 = create_inline_keyboard(["yes_stop", "no_stop"])
-ikb8 = create_inline_keyboard(["bonus", "bonus_no"])
-ikb9 = InlineKeyboardMarkup(row_width=1)
-ibtn_channel = InlineKeyboardButton('📲 Перейти на канал', url='https://t.me/aza10chanel')
-ibtn_check_chanel = InlineKeyboardButton('☑️ Проверить подписку', callback_data='check_chanel')
-ikb9.add(ibtn_channel, ibtn_check_chanel)
-ikb10 = InlineKeyboardMarkup(row_width=1)
-ibtn_instructions = InlineKeyboardButton('💰 Инструкция заработка', url='https://t.me/aza10chanel')
-ibtn_no_instructions = InlineKeyboardButton('❌ Отказываюсь от знаний', callback_data='no_instructions')
-ikb10.add(ibtn_instructions,ibtn_no_instructions)
 
 ikb5 = InlineKeyboardMarkup(row_width=1)
 ikb_friend = InlineKeyboardButton('Поделиться с другом', request_contact=True)
 ikb_start = InlineKeyboardButton('Заработок', callback_data='work')
 ikb_back = InlineKeyboardButton('Назад', callback_data='btn_back')
 ikb5.add(ikb_start, ikb_back)
+
+ikb6 = create_inline_keyboard(["watching", "stop_watching"])
+ikb7 = create_inline_keyboard(["yes_stop", "no_stop"])
+ikb8 = create_inline_keyboard(["bonus", "bonus_no"])
+
+ikb9 = InlineKeyboardMarkup(row_width=1)
+ibtn_channel = InlineKeyboardButton('📲 Перейти на канал', url='https://t.me/aza10chanel')
+ibtn_check_chanel = InlineKeyboardButton('☑️ Проверить подписку', callback_data='check_chanel')
+ikb9.add(ibtn_channel, ibtn_check_chanel)
+
+ikb10 = InlineKeyboardMarkup(row_width=1)
+ibtn_instructions = InlineKeyboardButton('💰 Инструкция заработка', url='https://t.me/aza10chanel')
+ibtn_no_instructions = InlineKeyboardButton('❌ Отказываюсь от знаний', callback_data='no_instructions')
+ikb10.add(ibtn_instructions,ibtn_no_instructions)
+
+
+
+

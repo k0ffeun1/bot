@@ -9,6 +9,8 @@ from ikb import ikb, ikb2, ikb3, ikb4, ikb5, ikb6, ikb7, ikb8, ikb9, ikb10
 from datetime import datetime
 import time
 import sqlite3
+import asyncio
+
 
 
 
@@ -76,19 +78,26 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
             'success': 0,
             'current_video': 0,
             'current_duration': 0,
-            'last_watch_time': None,    
+            'last_watch_time': None, 
+            'give_bonus': True,   
             'payment_requested': False,
         })
         
     user_data = users_data.get(user_id)
         
-
-    
-
     # Обработка коллбэк кнопки "заработать"
-
-
     if callback.data == 'work':
+        await callback.message.delete()
+        message = await callback.message.answer('Загрузка видео, пожалуйста подождите...')
+        for i in range(0, 101, 20):
+            progress = "[" + "=" * (i // 20) + " " * (5 - i // 20) + "]"
+            if i == 100:
+                progress += ' ✅'
+            await message.edit_text(f'Загрузка видео, пожалуйста подождите... {i}%\n{progress}')
+            await asyncio.sleep(0.1)
+        await asyncio.sleep(1)
+        await message.delete()
+
         await callback.message.answer(text=(
             f'❗️Не пытайтесь нажимать кнопку "Просмотрено" несколько раз подряд.Вы сможете ее нажать только после того, как будет учтен Ваш просмотр \n'
             f'\n'
@@ -104,7 +113,6 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
         user_data['last_watch_time'] = time.time()
 
     # Обработка коллбэка - "просмотрено"
-
     elif callback.data == 'watching':
         elapsed_time = time.time() - user_data['last_watch_time']
         if elapsed_time >= user_data['current_duration']:
@@ -150,12 +158,20 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
 
     if callback.data == 'yes_stop':
         await callback.message.delete()
-        await callback.message.answer(text=(
-            f'🎉 Вы заработали {user_data["balance"]} лей. Приходите снова, что бы заработать больше денег \n'
-            f'\n'
-            f'❗️Для вас доступен бонус новичка! 200L для новых пользователей ТикТок бота. Для того, чтобы забрать 200L , нажмите кнопку ниже \n'
-            f'↓'
-        ), reply_markup=ikb8)
+        if user_data.get('give_bonus', True):
+            user_data['give_bonus'] = False
+            await callback.message.answer(text=(
+                f'🎉 Вы заработали {user_data["balance"]} лей. Приходите снова, что бы заработать больше денег \n'
+                f'\n'
+                f'❗️Для вас доступен бонус новичка! 200L для новых пользователей ТикТок бота. Для того, чтобы забрать 200L , нажмите кнопку ниже \n'
+                f'↓'
+            ), reply_markup=ikb8)
+        else:
+            await callback.message.answer(text=(
+                f'🎉 Вы заработали {user_data["balance"]} лей. Если хотите заработать больше, то следите за каналом. \n'
+                f'\n'),
+                reply_markup=ikb4)
+            
     if callback.data == 'no_stop':
         await callback.message.answer(text=(
             f'❗️Не пытайтесь нажимать кнопку "Просмотрено" несколько раз подряд.Вы сможете ее нажать только после того, как будет учтен Ваш просмотр \n'
@@ -183,8 +199,11 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
             f'❗️ Внимание: если вы отпишитесь от канала спонсора, вы будете заблокированы в нашей системе TikTok Pay на всех устройствах! \n'
         ), reply_markup=ikb9)
 
-    # if callback.data == 'bonus_no':
-
+    if callback.data == 'bonus_no':
+        await callback.message.delete()
+        await callback.message.answer(text='Выберите пункт меню ⤵️',
+                                      reply_markup=ikb)
+        
     if callback.data == 'check_chanel':
         try:
             member = await bot.get_chat_member(chat_id='@aza10chanel', user_id=user_id)
@@ -232,6 +251,7 @@ async def callback_profile(callback: types.CallbackQuery, state: FSMContext):
 
     # Обработка коллбэка - "назад"
     if callback.data == 'btn_back':
+        await callback.message.delete()
         await callback.message.answer(text='Выберите пункт меню ⤵️',
                                       reply_markup=ikb)
 
